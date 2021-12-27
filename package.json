@@ -12,6 +12,7 @@
     "seedrandom": "^3.0.1"
   },
   "devDependencies": {
+    "arweave": "^1.10.19",
     "coffeeify": "^3.0.1",
     "es6-promise": "^4.2.6",
     "grunt": "^1.0.4",

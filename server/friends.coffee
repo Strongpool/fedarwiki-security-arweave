@@ -6,16 +6,14 @@
  * https://github.com/fedwiki/wiki-node-server/blob/master/LICENSE.txt
 ###
 # **security.coffee**
-# Module for default site security.
-#
-# This module is not intented for use, but is here to catch a problem with
-# configuration of security. It does not provide any authentication, but will
-# allow the server to run read-only.
+# Module for Arweave site security.
 
 #### Requires ####
 console.log 'friends starting'
+crypto = require 'crypto'
 fs = require 'fs'
 seedrandom = require 'seedrandom'
+Arweave = require 'arweave'
 
 
 # Export a function that generates security handler
@@ -32,18 +30,15 @@ module.exports = exports = (log, loga, argv) ->
   # save the location of the identity file
   idFile = argv.id
 
-  nickname = (seed) ->
-    rn = seedrandom(seed)
-    c = "bcdfghjklmnprstvwy"
-    v = "aeiou"
-    ch = (string) -> string.charAt Math.floor rn() * string.length
-    ch(c) + ch(v) + ch(c) + ch(v) + ch(c) + ch(v)
-
+  arweave = Arweave.init({
+    host: 'arweave.net'
+    port: 1984,
+    protocol: 'https'})
 
   #### Public stuff ####
 
   # Retrieve owner infomation from identity file in status directory
-  # owner will contain { name: <name>, friend: {secret: '...'}}
+  # owner will contain { address: <address> }
   security.retrieveOwner = (cb) ->
     fs.exists idFile, (exists) ->
       if exists
@@ -57,10 +52,10 @@ module.exports = exports = (log, loga, argv) ->
 
   # Return the owners name
   security.getOwner = getOwner = ->
-    if !owner.name?
+    if !owner.address?
       ownerName = ''
     else
-      ownerName = owner.name
+      ownerName = owner.address
     ownerName
 
   security.setOwner = setOwner = (id, cb) ->
@@ -76,14 +71,14 @@ module.exports = exports = (log, loga, argv) ->
         cb()
 
   security.getUser = (req) ->
-    if req.session.friend
-      return req.session.friend
+    if req.session.address
+      return req.session.address
     else
       return ''
 
   security.isAuthorized = (req) ->
     try
-      if req.session.friend is owner.friend.secret
+      if req.session.address is owner.address
         return true
       else
         return false
@@ -92,57 +87,55 @@ module.exports = exports = (log, loga, argv) ->
 
   # Wiki server admin
   security.isAdmin = (req) ->
-    if req.session.friend is admin
+    if req.session.address is admin
       return true
     else
       return false
 
   security.login = (updateOwner) ->
     (req, res) ->
+      try
+        rawTx = req.body.tx
+        tx = arweave.transactions.fromRaw rawTx
+        verified = await arweave.transactions.verify tx
+        address = arweave.utils.bufferTob64Url(
+          crypto
+            .createHash('sha256')
+            .update(arweave.utils.b64UrlToBuffer(rawTx.owner))
+            .digest())
+      catch error
+        console.log 'Failed to verify transaction ', req.hostname, 'error ', error
+        res.sendStatus(500)
 
       if owner is '' # site is not claimed
-        # create a secret and write it to owner file and the cookie
-        secret = require('crypto').randomBytes(32).toString('hex')
-        req.session.friend = secret
-        nick = nickname secret
-        id = {name: nick, friend: {secret: secret}}
-        setOwner id, (err) ->
-          if err
-            console.log 'Failed to claim wiki ', req.hostname, 'error ', err
-            res.sendStatus(500)
-          updateOwner getOwner
-          res.json({
-            ownerName: nick
-            })
-          res.end
+        if verified
+          req.session.address = address
+          id = { address: address }
+          setOwner id, (err) ->
+            if err
+              console.log 'Failed to claim wiki ', req.hostname, 'error ', err
+              res.sendStatus(500)
+            updateOwner getOwner
+            res.json { ownerName: address }
+            res.end
+        else
+          res.sendStatus(401)
       else
-        console.log 'friend returning login'
-        res.sendStatus(501)
+        if verified and owner.address is address
+          req.session.address = owner.address
+          res.end()
+        else
+          res.sendStatus(401)
+
+        console.log 'Arweave returning login'
 
   security.logout = () ->
     (req, res) ->
       req.session.reset()
-      res.send("OK")
-
-  security.reclaim = () ->
-    (req, res) ->
-      reclaimCode = ''
-      req.on('data', (chunk) ->
-        reclaimCode += chunk.toString())
-
-      req.on('end', () ->
-        try
-          if owner.friend.secret is reclaimCode
-            req.session.friend = owner.friend.secret
-            res.end()
-          else
-            res.sendStatus(401)
-        catch error
-          res.sendStatus(500))
+      res.send('OK')
 
   security.defineRoutes = (app, cors, updateOwner) ->
     app.post '/login', cors, security.login(updateOwner)
     app.get '/logout', cors, security.logout()
-    app.post '/auth/reclaim/', cors, security.reclaim()
 
   security

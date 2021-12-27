@@ -13,7 +13,7 @@
 
 ###
 
-
+arweave = null
 
 update_footer = (ownerName, isAuthenticated) ->
 
@@ -48,11 +48,21 @@ update_footer = (ownerName, isAuthenticated) ->
       signonTitle = 'Claim this Wiki'
       $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fas fa-lock fa-fw'></i></a>"
       $('footer > #security > #show-security-dialog').click (e) ->
+        tx = await arweave.createTransaction({
+          target: 'FIXME',
+          quantity: '0.01'
+          })
+        await arweave.transactions.sign(tx)
+
         myInit = {
           method: 'POST'
           cache: 'no-cache'
           mode: 'same-origin'
           credentials: 'include'
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify { tx: tx }
         }
         fetch '/login', myInit
         .then (response) ->
@@ -66,34 +76,40 @@ update_footer = (ownerName, isAuthenticated) ->
           else
             console.log 'login failed: ', response
     else
-      signonTitle = 'Reclaim this Wiki'
+      signonTitle = 'Login'
       $('footer > #security').append "<a href='#' id='show-security-dialog' class='footer-item' title='#{signonTitle}'><i class='fas fa-lock fa-fw'></i></a>"
       $('footer > #security > #show-security-dialog').click (e) ->
-        reclaimMessage = "Welcome back #{ownerName}. Please enter your reclaim code to reconnect with your wiki."
-        reclaimCode = ''
-        reclaimCode = window.prompt(reclaimMessage)
-        unless reclaimCode is ''
-          data = new FormData()
-          data.append( "json", JSON.stringify({reclaimCode: reclaimCode}))
-          myInit = {
-            method: 'POST'
-            cache: 'no-cache'
-            mode: 'same-origin'
-            credentials: 'include'
-            body: reclaimCode
-          }
-          fetch '/auth/reclaim/', myInit
-          .then (response) ->
-            console.log 'reclaim response', response
-            if response.ok
-              window.isAuthenticated = true
-              update_footer ownerName, true
-            else
-              console.log 'reclaim failed: ', response
+        tx = await arweave.createTransaction({
+          target: 'FIXME',
+          quantity: '0.01'
+          })
+        await arweave.transactions.sign(tx)
+
+        myInit = {
+          method: 'POST'
+          cache: 'no-cache'
+          mode: 'same-origin'
+          credentials: 'include'
+          headers: { 'Content-Type': 'application/json' }
+          body: JSON.stringify { tx: tx }
+        }
+        fetch '/login', myInit
+        .then (response) ->
+          console.log 'login response', response
+          if response.ok
+            window.isAuthenticated = true
+            update_footer ownerName, true
+          else
+            console.log 'login failed: ', response
 
 
 
 setup = (user) ->
+
+  # we will replace font-awesome with a small number of svg icons at a later date...
+  if (!$("link[href='https://unpkg.com/arweave/bundles/web.bundle.min.js']").length)
+    $('<link rel="stylesheet" href="/security/fontawesome/css/fontawesome.min.css">
+       <link rel="stylesheet" href="/security/fontawesome/css/solid.min.css">').appendTo("head")
 
   # we will replace font-awesome with a small number of svg icons at a later date...
   if (!$("link[href='/fontawesome/css/fontawesome.min.css']").length)
@@ -102,6 +118,10 @@ setup = (user) ->
 
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
+
+  wiki.getScript '/security/arweave.js', () ->
+    arweave = Arweave.init({})
+    arweave.network.getInfo().then(console.log)
 
   wiki.getScript '/security/modernizr-custom.js', () ->
     unless Modernizr.promises
