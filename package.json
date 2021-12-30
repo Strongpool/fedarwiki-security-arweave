@@ -1,9 +1,10 @@
 {
-  "name": "wiki-security-friends",
-  "description": "A friendly security module (dependency free) for Federated Wiki node server",
-  "version": "0.2.3",
-  "author": "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me/)",
+  "name": "fedarwiki-security-arweave",
+  "description": "An Arweave security module for Federated Wiki node server",
+  "version": "0.0.1",
+  "author": "David Whittington <djwhitt@gmail.com>",
   "contributors": [
+    "Paul Rodwell <paul.rodwell@btinternet.com> (http://rodwell.me/)",
     "Ward Cunningham <ward@c2.com>"
   ],
   "license": "MIT",
@@ -23,10 +24,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fedwiki/wiki-security-friends.git"
+    "url": "https://github.com/Strongpool/fedarwiki-security-arweave.git"
   },
   "bugs": {
-    "url": "https://github.com/fedwiki/wiki-security-friends/issues"
+    "url": "https://github.com/fedwiki/fedarwiki-security-arweave/issues"
   },
   "engines": {
     "node": ">=4"
