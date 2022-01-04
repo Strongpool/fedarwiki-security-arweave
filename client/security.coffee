@@ -13,8 +13,6 @@
 
 ###
 
-arweave = null
-
 update_footer = (ownerName, isAuthenticated) ->
 
   # we update the owner and the login state in the footer, and
@@ -107,21 +105,12 @@ update_footer = (ownerName, isAuthenticated) ->
 setup = (user) ->
 
   # we will replace font-awesome with a small number of svg icons at a later date...
-  if (!$("link[href='https://unpkg.com/arweave/bundles/web.bundle.min.js']").length)
-    $('<link rel="stylesheet" href="/security/fontawesome/css/fontawesome.min.css">
-       <link rel="stylesheet" href="/security/fontawesome/css/solid.min.css">').appendTo("head")
-
-  # we will replace font-awesome with a small number of svg icons at a later date...
   if (!$("link[href='/fontawesome/css/fontawesome.min.css']").length)
     $('<link rel="stylesheet" href="/security/fontawesome/css/fontawesome.min.css">
        <link rel="stylesheet" href="/security/fontawesome/css/solid.min.css">').appendTo("head")
 
   if (!$("link[href='/security/style.css']").length)
     $('<link rel="stylesheet" href="/security/style.css">').appendTo("head")
-
-  wiki.getScript '/security/arweave.js', () ->
-    arweave = Arweave.init({})
-    arweave.network.getInfo().then(console.log)
 
   wiki.getScript '/security/modernizr-custom.js', () ->
     unless Modernizr.promises
