@@ -1,5 +1,5 @@
 {
-  "name": "fedarwiki-security-arweave",
+  "name": "wiki-security-arweave",
   "description": "An Arweave security module for Federated Wiki node server",
   "version": "0.0.1",
   "author": "David Whittington <djwhitt@gmail.com>",
@@ -24,10 +24,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Strongpool/fedarwiki-security-arweave.git"
+    "url": "https://github.com/Strongpool/wiki-security-arweave.git"
   },
   "bugs": {
-    "url": "https://github.com/fedwiki/fedarwiki-security-arweave/issues"
+    "url": "https://github.com/fedwiki/wiki-security-arweave/issues"
   },
   "engines": {
     "node": ">=4"
